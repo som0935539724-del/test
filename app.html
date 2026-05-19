@@ -3,26 +3,78 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="app-version" content="1" />
+<meta name="app-version" content="2" />
 <title>待办清单</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
+  :root {
+    --bg: #f5f5f5;
+    --card-bg: #fff;
+    --text: #1a1a1a;
+    --text-secondary: #888;
+    --border: #e0e0e0;
+    --input-bg: #fff;
+    --hover-bg: #f5f5f5;
+    --chip-bg: #fff;
+    --att-bg: #f9f9f9;
+    --shadow: rgba(0,0,0,.06);
+    --toast-bg: #333;
+    --toast-text: #fff;
+    --lightbox-bg: rgba(0,0,0,.85);
+    --date-panel-bg: #fff;
+    --date-panel-border: #e0e0e0;
+    --count-bg: #f5f5f5;
+    --primary: #e8c547;
+    --primary-hover: #d4b33c;
+  }
+  [data-theme="dark"] {
+    --bg: #1a1a2e;
+    --card-bg: #16213e;
+    --text: #e0e0e0;
+    --text-secondary: #999;
+    --border: #2a2a4a;
+    --input-bg: #0f3460;
+    --hover-bg: #1a1a3e;
+    --chip-bg: #0f3460;
+    --att-bg: #0f3460;
+    --shadow: rgba(0,0,0,.3);
+    --toast-bg: #e0e0e0;
+    --toast-text: #1a1a2e;
+    --lightbox-bg: rgba(0,0,0,.9);
+    --date-panel-bg: #16213e;
+    --date-panel-border: #2a2a4a;
+    --count-bg: #0f3460;
+  }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #f5f5f5;
-    color: #1a1a1a;
+    background: var(--bg);
+    color: var(--text);
     height: 100dvh;
     display: flex;
     justify-content: center;
-    padding: env(safe-area-inset-top, 8px) 0 env(safe-area-inset-bottom, 8px) 0;
+    align-items: center;
+    padding: env(safe-area-inset-top, 8px) env(safe-area-inset-left, 0) env(safe-area-inset-bottom, 8px) env(safe-area-inset-right, 0);
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
   }
+  .app-shell {
+    width: 100vw;
+    max-width: calc(100dvh * 9 / 16);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  @media (min-aspect-ratio: 9/16) {
+    .app-shell {
+      width: calc(100dvh * 9 / 16);
+      max-width: 100vw;
+    }
+  }
   .app {
     width: 100%;
-    max-width: 100%;
     padding: 0 14px;
     display: flex;
     flex-direction: column;
@@ -38,17 +90,19 @@
   .input-row input[type="text"] {
     flex: 1;
     padding: 13px 14px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--border);
     border-radius: 10px;
     font-size: 16px;
     outline: none;
     transition: border-color .2s;
     min-width: 0;
+    background: var(--input-bg);
+    color: var(--text);
   }
-  .input-row input[type="text"]:focus { border-color: #e8c547; }
+  .input-row input[type="text"]:focus { border-color: var(--primary); }
   .input-row button {
     padding: 13px 18px;
-    background: #e8c547;
+    background: var(--primary);
     color: #fff;
     border: none;
     border-radius: 10px;
@@ -59,12 +113,12 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .input-row button:hover { background: #d4b33c; }
+  .input-row button:hover { background: var(--primary-hover); }
 
   .attach-btn {
     padding: 13px 13px;
-    background: #fff;
-    border: 2px solid #e0e0e0;
+    background: var(--input-bg);
+    border: 2px solid var(--border);
     border-radius: 10px;
     font-size: 19px;
     cursor: pointer;
@@ -72,8 +126,8 @@
     line-height: 1;
     flex-shrink: 0;
   }
-  .attach-btn:hover { border-color: #e8c547; background: #fef9ed; }
-  .attach-btn.has-files { border-color: #e8c547; background: #fef9ed; }
+  .attach-btn:hover { border-color: var(--primary); background: var(--att-bg); }
+  .attach-btn.has-files { border-color: var(--primary); background: var(--att-bg); }
 
   .file-preview {
     display: flex;
@@ -87,10 +141,11 @@
     align-items: center;
     gap: 5px;
     padding: 5px 8px 5px 10px;
-    background: #fff;
-    border: 1px solid #e0e0e0;
+    background: var(--chip-bg);
+    border: 1px solid var(--border);
     border-radius: 20px;
     font-size: 13px;
+    color: var(--text);
   }
   .file-preview .chip img { width: 22px; height: 22px; border-radius: 4px; object-fit: cover; }
   .file-preview .chip .remove-chip {
@@ -112,27 +167,30 @@
     flex: 1;
     min-width: 0;
     padding: 11px 14px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--border);
     border-radius: 10px;
     font-size: 15px;
     outline: none;
     transition: border-color .2s;
+    background: var(--input-bg);
+    color: var(--text);
   }
-  .search-row input:focus { border-color: #e8c547; }
-  .search-row input.has-value { border-color: #e8c547; background: #fef9ed; }
+  .search-row input:focus { border-color: var(--primary); }
+  .search-row input.has-value { border-color: var(--primary); background: var(--att-bg); }
 
   .date-filter-btn {
     padding: 11px 14px;
-    background: #fff;
-    border: 2px solid #e0e0e0;
+    background: var(--input-bg);
+    border: 2px solid var(--border);
     border-radius: 10px;
     font-size: 15px;
     cursor: pointer;
     transition: all .2s;
     white-space: nowrap;
     flex-shrink: 0;
+    color: var(--text);
   }
-  .date-filter-btn:hover, .date-filter-btn.active { border-color: #e8c547; background: #fef9ed; }
+  .date-filter-btn:hover, .date-filter-btn.active { border-color: var(--primary); background: var(--att-bg); }
 
   .date-panel {
     display: none;
@@ -142,8 +200,8 @@
     margin-top: 6px;
     width: 260px;
     max-height: 340px;
-    background: #fff;
-    border: 1px solid #e0e0e0;
+    background: var(--date-panel-bg);
+    border: 1px solid var(--date-panel-border);
     border-radius: 10px;
     box-shadow: 0 4px 16px rgba(0,0,0,.12);
     z-index: 100;
@@ -157,7 +215,7 @@
     align-items: center;
     gap: 6px;
     padding: 10px 12px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
   .date-panel-header .back-btn {
@@ -166,18 +224,18 @@
     font-size: 16px;
     cursor: pointer;
     padding: 4px 8px;
-    color: #888;
+    color: var(--text-secondary);
     border-radius: 6px;
     visibility: hidden;
   }
   .date-panel-header .back-btn.visible { visibility: visible; }
-  .date-panel-header .back-btn:hover { background: #f5f5f5; }
+  .date-panel-header .back-btn:hover { background: var(--hover-bg); }
   .date-panel-header .panel-title {
     flex: 1;
     text-align: center;
     font-size: 14px;
     font-weight: 600;
-    color: #333;
+    color: var(--text);
   }
 
   .date-list {
@@ -189,16 +247,17 @@
     padding: 12px 14px;
     cursor: pointer;
     font-size: 15px;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    color: var(--text);
   }
-  .date-list li:hover { background: #fef9ed; }
+  .date-list li:hover { background: var(--att-bg); }
   .date-list li .count {
     font-size: 12px;
-    color: #aaa;
-    background: #f5f5f5;
+    color: var(--text-secondary);
+    background: var(--count-bg);
     padding: 2px 8px;
     border-radius: 10px;
   }
@@ -211,18 +270,18 @@
   .date-list li.task-detail-item:hover { background: transparent; }
   .date-list li.task-detail-item .task-detail-time {
     font-size: 12px;
-    color: #999;
+    color: var(--text-secondary);
   }
   .date-list li.task-detail-item .task-detail-text {
     font-size: 15px;
   }
   .date-list li.task-detail-item.done-item .task-detail-text {
     text-decoration: line-through;
-    color: #aaa;
+    color: var(--text-secondary);
   }
   .date-list .empty-hint {
     text-align: center;
-    color: #bbb;
+    color: var(--text-secondary);
     padding: 24px;
     font-size: 14px;
   }
@@ -236,17 +295,18 @@
   .filters button {
     flex: 1;
     padding: 10px 0;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border);
     border-radius: 8px;
-    background: #fff;
+    background: var(--card-bg);
     font-size: 14px;
     cursor: pointer;
     transition: all .15s;
+    color: var(--text);
   }
   .filters button.active {
-    background: #e8c547;
+    background: var(--primary);
     color: #fff;
-    border-color: #e8c547;
+    border-color: var(--primary);
   }
 
   .task-list { list-style: none; flex: 1; overflow-y: auto; padding-bottom: 6px; }
@@ -254,10 +314,10 @@
     display: flex;
     flex-direction: column;
     padding: 13px 14px;
-    background: #fff;
+    background: var(--card-bg);
     border-radius: 10px;
     margin-bottom: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    box-shadow: 0 1px 3px var(--shadow);
   }
   .task-row {
     display: flex;
@@ -266,7 +326,7 @@
   }
   .task input[type="checkbox"] {
     width: 22px; height: 22px;
-    accent-color: #e8c547;
+    accent-color: var(--primary);
     cursor: pointer;
     flex-shrink: 0;
   }
@@ -279,25 +339,27 @@
     border-radius: 4px;
     transition: background .15s;
   }
-  .task .text:hover { background: #f5f5f5; }
+  .task .text:hover { background: var(--hover-bg); }
   .task.done .text {
     text-decoration: line-through;
-    color: #aaa;
+    color: var(--text-secondary);
   }
   .task .edit-input {
     flex: 1;
     font-size: 16px;
     padding: 4px 8px;
-    border: 2px solid #e8c547;
+    border: 2px solid var(--primary);
     border-radius: 6px;
     outline: none;
     min-width: 0;
+    background: var(--input-bg);
+    color: var(--text);
   }
 
   .task .del {
     background: none;
     border: none;
-    color: #ccc;
+    color: var(--text-secondary);
     font-size: 22px;
     cursor: pointer;
     padding: 4px 8px;
@@ -310,7 +372,7 @@
 
   .task-time {
     font-size: 12px;
-    color: #999;
+    color: var(--text-secondary);
     padding-left: 32px;
     margin-top: 4px;
   }
@@ -331,17 +393,17 @@
     align-items: center;
     gap: 5px;
     padding: 4px 8px;
-    background: #f9f9f9;
-    border: 1px solid #eee;
+    background: var(--att-bg);
+    border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 13px;
     cursor: pointer;
     transition: background .15s;
     max-width: 160px;
     text-decoration: none;
-    color: inherit;
+    color: var(--text);
   }
-  .task-attachments .att-item:hover { background: #f0f0f0; }
+  .task-attachments .att-item:hover { background: var(--hover-bg); }
   .task-attachments .att-item img {
     width: 34px; height: 34px;
     border-radius: 4px;
@@ -364,26 +426,26 @@
     align-items: center;
     padding-top: 10px;
     font-size: 13px;
-    color: #888;
+    color: var(--text-secondary);
     flex-shrink: 0;
   }
   .footer button {
     background: none;
     border: none;
-    color: #888;
+    color: var(--text-secondary);
     font-size: 13px;
     cursor: pointer;
     padding: 8px;
   }
   .footer button:hover { color: #e74c3c; }
 
-  .empty { text-align: center; color: #bbb; padding: 40px 0; font-size: 15px; }
+  .empty { text-align: center; color: var(--text-secondary); padding: 40px 0; font-size: 15px; }
 
   .lightbox {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.85);
+    background: var(--lightbox-bg);
     z-index: 1000;
     justify-content: center;
     align-items: center;
@@ -407,12 +469,94 @@
     border: none;
     line-height: 1;
   }
+
+  /* 设置按钮 */
+  .settings-btn {
+    position: fixed;
+    bottom: max(18px, env(safe-area-inset-bottom, 18px));
+    left: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 200;
+    box-shadow: 0 2px 8px var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+  }
+  .settings-btn:hover { border-color: var(--primary); }
+
+  /* 设置页面 */
+  .settings-page {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 300;
+    flex-direction: column;
+    padding: env(safe-area-inset-top, 8px) 14px env(safe-area-inset-bottom, 8px) 14px;
+  }
+  .settings-page.show { display: flex; }
+
+  .settings-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0 16px;
+    flex-shrink: 0;
+  }
+  .settings-back {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 6px 10px;
+    color: var(--text);
+    border-radius: 8px;
+  }
+  .settings-back:hover { background: var(--hover-bg); }
+  .settings-header h3 {
+    font-size: 18px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .settings-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 40px;
+  }
+  .settings-body .bg-btn {
+    padding: 24px 20px;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    background: var(--card-bg);
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: 600;
+    text-align: center;
+    transition: all .2s;
+    color: var(--text);
+  }
+  .settings-body .bg-btn:active { transform: scale(.97); }
+  .settings-body .bg-btn.active {
+    border-color: var(--primary);
+    background: var(--att-bg);
+  }
 </style>
 </head>
 <body>
 <script src="update-manager.js"></script>
 <div id="app-container" style="display:none">
 
+<div class="app-shell">
 <div class="app">
   <div class="input-row">
     <input id="todoInput" type="text" placeholder="添加新任务..." maxlength="200" autofocus />
@@ -455,6 +599,14 @@
 </div>
 
 <script>
+  // 主题初始化
+  (function() {
+    var saved = localStorage.getItem('app-theme');
+    if (saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
   const state = {
     tasks: JSON.parse(localStorage.getItem('todos') || '[]'),
@@ -918,9 +1070,67 @@
 
   document.getElementById('clearDone').addEventListener('click', clearDone);
 
+  // 设置页面
+  var $settingsBtn = document.getElementById('settingsBtn');
+  var $settingsPage = document.getElementById('settingsPage');
+  var $settingsBack = document.getElementById('settingsBack');
+  var $bgWhiteBtn = document.getElementById('bgWhiteBtn');
+  var $bgBlackBtn = document.getElementById('bgBlackBtn');
+  var $appShell = document.querySelector('.app-shell');
+
+  function openSettings() {
+    updateBgBtns();
+    $settingsPage.classList.add('show');
+  }
+  function closeSettings() {
+    $settingsPage.classList.remove('show');
+  }
+  function setBg(bg) {
+    if (bg === 'black') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('app-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('app-theme', 'light');
+    }
+    updateBgBtns();
+  }
+  function updateBgBtns() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    $bgWhiteBtn.classList.toggle('active', !isDark);
+    $bgBlackBtn.classList.toggle('active', isDark);
+  }
+
+  $settingsBtn.addEventListener('click', function() {
+    updateBgBtns();
+    $appShell.style.display = 'none';
+    $settingsPage.classList.add('show');
+  });
+  $settingsBack.addEventListener('click', function() {
+    $settingsPage.classList.remove('show');
+    $appShell.style.display = '';
+  });
+  $bgWhiteBtn.addEventListener('click', function() { setBg('white'); });
+  $bgBlackBtn.addEventListener('click', function() { setBg('black'); });
+
   render();
 </script>
 
+
+<button class="settings-btn" id="settingsBtn" title="设置">⚙</button>
+
+<div class="settings-page" id="settingsPage">
+  <div class="settings-header">
+    <button class="settings-back" id="settingsBack">← 返回</button>
+    <h3>设置</h3>
+  </div>
+  <div class="settings-body">
+    <button class="bg-btn" data-bg="white" id="bgWhiteBtn">⬜ 白色背景</button>
+    <button class="bg-btn" data-bg="black" id="bgBlackBtn">⬛ 黑色背景</button>
+  </div>
+</div>
+
+</div><!-- /.app-shell -->
 </div><!-- /#app-container -->
 </body>
 </html>
