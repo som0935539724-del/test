@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="app-version" content="3" />
+<title>待办清单</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  :root {
+    --bg: #f5f5f5;
+    --card-bg: #fff;
+    --text: #1a1a1a;
+    --text-secondary: #888;
+    --border: #e0e0e0;
+    --input-bg: #fff;
+    --hover-bg: #f5f5f5;
+    --chip-bg: #fff;
+    --att-bg: #f9f9f9;
+    --shadow: rgba(0,0,0,.06);
+    --toast-bg: #333;
+    --toast-text: #fff;
+    --lightbox-bg: rgba(0,0,0,.85);
+    --date-panel-bg: #fff;
+    --date-panel-border: #e0e0e0;
+    --count-bg: #f5f5f5;
+    --primary: #e8c547;
+    --primary-hover: #d4b33c;
+  }
+  [data-theme="dark"] {
+    --bg: #1a1a2e;
+    --card-bg: #16213e;
+    --text: #e0e0e0;
+    --text-secondary: #999;
+    --border: #2a2a4a;
+    --input-bg: #0f3460;
+    --hover-bg: #1a1a3e;
+    --chip-bg: #0f3460;
+    --att-bg: #0f3460;
+    --shadow: rgba(0,0,0,.3);
+    --toast-bg: #e0e0e0;
+    --toast-text: #1a1a2e;
+    --lightbox-bg: rgba(0,0,0,.9);
+    --date-panel-bg: #16213e;
+    --date-panel-border: #2a2a4a;
+    --count-bg: #0f3460;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: env(safe-area-inset-top, 8px) env(safe-area-inset-left, 0) env(safe-area-inset-bottom, 8px) env(safe-area-inset-right, 0);
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .app-shell {
+    width: 100vw;
+    max-width: calc(100dvh * 9 / 16);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  @media (min-aspect-ratio: 9/16) {
+    .app-shell {
+      width: calc(100dvh * 9 / 16);
+      max-width: 100vw;
+    }
+  }
+  .app {
+    width: 100%;
+    padding: 0 14px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+  .input-row input[type="text"] {
+    flex: 1;
+    padding: 13px 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color .2s;
+    min-width: 0;
+    background: var(--input-bg);
+    color: var(--text);
+  }
+  .input-row input[type="text"]:focus { border-color: var(--primary); }
+  .input-row button {
+    padding: 13px 18px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .input-row button:hover { background: var(--primary-hover); }
+
+  .attach-btn {
+    padding: 13px 13px;
+    background: var(--input-bg);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 19px;
+    cursor: pointer;
+    transition: all .2s;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .attach-btn:hover { border-color: var(--primary); background: var(--att-bg); }
+  .attach-btn.has-files { border-color: var(--primary); background: var(--att-bg); }
+
+  .file-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+  .file-preview .chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 8px 5px 10px;
+    background: var(--chip-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .file-preview .chip img { width: 22px; height: 22px; border-radius: 4px; object-fit: cover; }
+  .file-preview .chip .remove-chip {
+    background: none; border: none;
+    color: #bbb; font-size: 18px;
+    cursor: pointer; padding: 0 2px;
+    line-height: 1;
+  }
+  .file-preview .chip .remove-chip:hover { color: #e74c3c; }
+
+  .search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .search-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color .2s;
+    background: var(--input-bg);
+    color: var(--text);
+  }
+  .search-row input:focus { border-color: var(--primary); }
+  .search-row input.has-value { border-color: var(--primary); background: var(--att-bg); }
+
+  .date-filter-btn {
+    padding: 11px 14px;
+    background: var(--input-bg);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    color: var(--text);
+  }
+  .date-filter-btn:hover, .date-filter-btn.active { border-color: var(--primary); background: var(--att-bg); }
+
+  .date-panel {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 6px;
+    width: 260px;
+    max-height: 340px;
+    background: var(--date-panel-bg);
+    border: 1px solid var(--date-panel-border);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    z-index: 100;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .date-panel.show { display: flex; }
+
+  .date-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .date-panel-header .back-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    visibility: hidden;
+  }
+  .date-panel-header .back-btn.visible { visibility: visible; }
+  .date-panel-header .back-btn:hover { background: var(--hover-bg); }
+  .date-panel-header .panel-title {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .date-list {
+    list-style: none;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .date-list li {
+    padding: 12px 14px;
+    cursor: pointer;
+    font-size: 15px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text);
+  }
+  .date-list li:hover { background: var(--att-bg); }
+  .date-list li .count {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--count-bg);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .date-list li.task-detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    cursor: default;
+  }
+  .date-list li.task-detail-item:hover { background: transparent; }
+  .date-list li.task-detail-item .task-detail-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .date-list li.task-detail-item .task-detail-text {
+    font-size: 15px;
+  }
+  .date-list li.task-detail-item.done-item .task-detail-text {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+  }
+  .date-list .empty-hint {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 24px;
+    font-size: 14px;
+  }
+
+  .filters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+  .filters button {
+    flex: 1;
+    padding: 10px 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .15s;
+    color: var(--text);
+  }
+  .filters button.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  .task-list { list-style: none; flex: 1; overflow-y: auto; padding-bottom: 6px; }
+  .task {
+    display: flex;
+    flex-direction: column;
+    padding: 13px 14px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px var(--shadow);
+  }
+  .task-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .task input[type="checkbox"] {
+    width: 22px; height: 22px;
+    accent-color: var(--primary);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .task .text {
+    flex: 1;
+    font-size: 16px;
+    word-break: break-all;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background .15s;
+  }
+  .task .text:hover { background: var(--hover-bg); }
+  .task.done .text {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+  }
+  .task .edit-input {
+    flex: 1;
+    font-size: 16px;
+    padding: 4px 8px;
+    border: 2px solid var(--primary);
+    border-radius: 6px;
+    outline: none;
+    min-width: 0;
+    background: var(--input-bg);
+    color: var(--text);
+  }
+
+  .task .del {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all .15s;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .task .del:hover { color: #e74c3c; background: #fdf2f2; }
+
+  .task-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding-left: 32px;
+    margin-top: 4px;
+  }
+  .task-time.done-time {
+    color: #2ecc71;
+    font-weight: 500;
+  }
+
+  .task-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+    padding-left: 32px;
+  }
+  .task-attachments .att-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    background: var(--att-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .15s;
+    max-width: 160px;
+    text-decoration: none;
+    color: var(--text);
+  }
+  .task-attachments .att-item:hover { background: var(--hover-bg); }
+  .task-attachments .att-item img {
+    width: 34px; height: 34px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .task-attachments .att-item .file-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .task-attachments .att-item .file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+  .footer button {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 8px;
+  }
+  .footer button:hover { color: #e74c3c; }
+
+  .empty { text-align: center; color: var(--text-secondary); padding: 40px 0; font-size: 15px; }
+
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--lightbox-bg);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+  .lightbox.show { display: flex; }
+  .lightbox img {
+    max-width: 94vw;
+    max-height: 94vh;
+    border-radius: 6px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.4);
+  }
+  .lightbox .close-lb {
+    position: absolute;
+    top: 12px;
+    right: 20px;
+    color: #fff;
+    font-size: 38px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    line-height: 1;
+  }
+
+  /* 设置按钮 */
+  .settings-btn {
+    position: fixed;
+    bottom: max(18px, env(safe-area-inset-bottom, 18px));
+    left: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 200;
+    box-shadow: 0 2px 8px var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+  }
+  .settings-btn:hover { border-color: var(--primary); }
+
+  /* 设置页面 */
+  .settings-page {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 300;
+    flex-direction: column;
+    padding: env(safe-area-inset-top, 8px) 14px env(safe-area-inset-bottom, 8px) 14px;
+  }
+  .settings-page.show { display: flex; }
+
+  .settings-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0 16px;
+    flex-shrink: 0;
+  }
+  .settings-back {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 6px 10px;
+    color: var(--text);
+    border-radius: 8px;
+  }
+  .settings-back:hover { background: var(--hover-bg); }
+  .settings-header h3 {
+    font-size: 18px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .settings-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 40px;
+  }
+  .settings-body .bg-btn {
+    padding: 24px 20px;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    background: var(--card-bg);
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: 600;
+    text-align: center;
+    transition: all .2s;
+    color: var(--text);
+  }
+  .settings-body .bg-btn:active { transform: scale(.97); }
+  .settings-body .bg-btn.active {
+    border-color: var(--primary);
+    background: var(--att-bg);
+  }
+</style>
+</head>
+<body>
+<script src="update-manager.js"></script>
+<div id="app-container" style="display:none">
+
+<div class="app-shell">
+<div class="app">
+  <div class="input-row">
+    <input id="todoInput" type="text" placeholder="添加新任务..." maxlength="200" autofocus />
+    <button id="attachBtn" class="attach-btn" title="添加附件">📎</button>
+    <input id="fileInput" type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar" style="display:none" />
+    <button id="addBtn">添加</button>
+  </div>
+
+  <div class="file-preview" id="filePreview"></div>
+
+  <div class="search-row">
+    <input id="searchInput" type="text" placeholder="搜索任务名称..." maxlength="100" />
+    <button id="dateFilterBtn" class="date-filter-btn" title="按日期筛选">📅</button>
+    <div class="date-panel" id="datePanel">
+      <div class="date-panel-header">
+        <button class="back-btn" id="dateBackBtn">←</button>
+        <span class="panel-title" id="datePanelTitle">选择年份</span>
+      </div>
+      <ul class="date-list" id="dateList"></ul>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button data-filter="all" class="active">全部</button>
+    <button data-filter="active">未完成</button>
+    <button data-filter="done">已完成</button>
+  </div>
+
+  <ul class="task-list" id="taskList"></ul>
+
+  <div class="footer">
+    <span id="counter"></span>
+    <button id="clearDone">清除已完成</button>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="close-lb">&times;</button>
+  <img id="lightboxImg" src="" alt="预览" />
+</div>
+
+<script>
+  // 主题初始化
+  (function() {
+    var saved = localStorage.getItem('app-theme');
+    if (saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
+  const state = {
+    tasks: JSON.parse(localStorage.getItem('todos') || '[]'),
+    filter: 'all',
+    searchQuery: '',
+    nextId: Date.now(),
+    pendingFiles: []
+  };
+
+  const $input = document.getElementById('todoInput');
+  const $list = document.getElementById('taskList');
+  const $counter = document.getElementById('counter');
+  const $fileInput = document.getElementById('fileInput');
+  const $filePreview = document.getElementById('filePreview');
+  const $attachBtn = document.getElementById('attachBtn');
+  const $searchInput = document.getElementById('searchInput');
+  const $lightbox = document.getElementById('lightbox');
+  const $lightboxImg = document.getElementById('lightboxImg');
+  const $dateFilterBtn = document.getElementById('dateFilterBtn');
+  const $datePanel = document.getElementById('datePanel');
+  const $dateList = document.getElementById('dateList');
+  const $dateBackBtn = document.getElementById('dateBackBtn');
+  const $datePanelTitle = document.getElementById('datePanelTitle');
+
+  let dateNav = null; // { level, year, month, week }
+
+  function save() {
+    localStorage.setItem('todos', JSON.stringify(state.tasks));
+  }
+
+  document.getElementById('attachBtn').addEventListener('click', () => $fileInput.click());
+
+  $fileInput.addEventListener('change', () => {
+    const files = Array.from($fileInput.files);
+    for (const file of files) {
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`文件 "${file.name}" 超过 5MB 限制，已跳过`);
+        continue;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        state.pendingFiles.push({
+          name: file.name,
+          type: file.type,
+          data: reader.result,
+          size: file.size
+        });
+        renderFilePreview();
+      };
+      reader.readAsDataURL(file);
+    }
+    $fileInput.value = '';
+  });
+
+  function removePendingFile(index) {
+    state.pendingFiles.splice(index, 1);
+    renderFilePreview();
+  }
+
+  function renderFilePreview() {
+    if (state.pendingFiles.length === 0) {
+      $filePreview.innerHTML = '';
+      $attachBtn.classList.remove('has-files');
+      return;
+    }
+    $attachBtn.classList.add('has-files');
+    $filePreview.innerHTML = state.pendingFiles.map((f, i) => {
+      const isImg = f.type.startsWith('image/');
+      const thumb = isImg ? `<img src="${f.data}" alt="" />` : `<span class="file-icon">📄</span>`;
+      return `
+        <div class="chip">
+          ${thumb}
+          <span>${escapeHtml(f.name)}</span>
+          <button class="remove-chip" data-index="${i}" title="移除">&times;</button>
+        </div>
+      `;
+    }).join('');
+
+    $filePreview.querySelectorAll('.remove-chip').forEach(btn => {
+      btn.addEventListener('click', () => removePendingFile(Number(btn.dataset.index)));
+    });
+  }
+
+  function addTask(text) {
+    state.tasks.push({
+      id: ++state.nextId,
+      text: text.trim(),
+      done: false,
+      createdAt: getBeijingTime(),
+      completedAt: null,
+      files: state.pendingFiles.splice(0)
+    });
+    save();
+    renderFilePreview();
+    render();
+  }
+
+  function toggle(id) {
+    const t = state.tasks.find(t => t.id === id);
+    if (t) { t.done = !t.done; t.completedAt = t.done ? getBeijingTime() : null; save(); render(); }
+  }
+
+  function remove(id) {
+    state.tasks = state.tasks.filter(t => t.id !== id);
+    save();
+    render();
+  }
+
+  function clearDone() {
+    state.tasks = state.tasks.filter(t => !t.done);
+    save();
+    render();
+  }
+
+  function parseTaskDate(task) {
+    if (!task.createdAt) return null;
+    const m = task.createdAt.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return null;
+    return { year: +m[1], month: +m[2], day: +m[3] };
+  }
+
+  function getWeekRange(year, month, weekNum) {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const start = (weekNum - 1) * 7 + 1;
+    const end = Math.min(weekNum * 7, daysInMonth);
+    return { start, end };
+  }
+
+  function getMonthWeeks(year, month) {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    return Math.ceil(daysInMonth / 7);
+  }
+
+  function openDatePanel() {
+    if ($datePanel.classList.contains('show')) { closeDatePanel(); return; }
+    dateNav = { level: 'year' };
+    $dateFilterBtn.classList.add('active');
+    $datePanel.classList.add('show');
+    renderDateNav();
+  }
+
+  function closeDatePanel() {
+    $datePanel.classList.remove('show');
+    $dateFilterBtn.classList.remove('active');
+    dateNav = null;
+  }
+
+  function renderDateNav() {
+    $dateBackBtn.classList.toggle('visible', dateNav.level !== 'year');
+    const tasksWithDate = state.tasks.filter(t => parseTaskDate(t));
+
+    let html = '';
+    let title = '';
+
+    if (dateNav.level === 'year') {
+      title = '选择年份';
+      const years = {};
+      tasksWithDate.forEach(t => {
+        const d = parseTaskDate(t);
+        if (!years[d.year]) years[d.year] = { total: 0, active: 0 };
+        years[d.year].total++;
+        if (!t.done) years[d.year].active++;
+      });
+      const sorted = Object.keys(years).sort((a, b) => b - a);
+      if (sorted.length === 0) {
+        html = '<li class="empty-hint">暂无任务数据</li>';
+      } else {
+        html = sorted.map(y => `
+          <li data-year="${y}">
+            <span>${y} 年</span>
+            <span class="count">${years[y].active}/${years[y].total}</span>
+          </li>`).join('');
+      }
+    } else if (dateNav.level === 'month') {
+      title = `${dateNav.year} 年`;
+      const months = {};
+      tasksWithDate.forEach(t => {
+        const d = parseTaskDate(t);
+        if (d.year !== dateNav.year) return;
+        if (!months[d.month]) months[d.month] = { total: 0, active: 0 };
+        months[d.month].total++;
+        if (!t.done) months[d.month].active++;
+      });
+      const sorted = Object.keys(months).sort((a, b) => a - b);
+      html = sorted.map(m => `
+        <li data-month="${m}">
+          <span>${m} 月</span>
+          <span class="count">${months[m].active}/${months[m].total}</span>
+        </li>`).join('');
+    } else if (dateNav.level === 'week') {
+      title = `${dateNav.year} 年 ${dateNav.month} 月`;
+      const weeks = {};
+      tasksWithDate.forEach(t => {
+        const d = parseTaskDate(t);
+        if (d.year !== dateNav.year || d.month !== dateNav.month) return;
+        const weekNum = Math.ceil(d.day / 7);
+        if (!weeks[weekNum]) weeks[weekNum] = { total: 0, active: 0 };
+        weeks[weekNum].total++;
+        if (!t.done) weeks[weekNum].active++;
+      });
+      const totalWeeks = getMonthWeeks(dateNav.year, dateNav.month);
+      html = '';
+      for (let w = 1; w <= totalWeeks; w++) {
+        const range = getWeekRange(dateNav.year, dateNav.month, w);
+        const data = weeks[w] || { total: 0, active: 0 };
+        html += `
+          <li data-week="${w}">
+            <span>第${w}周 (${range.start}-${range.end}日)</span>
+            <span class="count">${data.active}/${data.total}</span>
+          </li>`;
+      }
+    } else if (dateNav.level === 'day') {
+      title = `${dateNav.year} 年 ${dateNav.month} 月 第${dateNav.week}周`;
+      const range = getWeekRange(dateNav.year, dateNav.month, dateNav.week);
+      const days = {};
+      tasksWithDate.forEach(t => {
+        const d = parseTaskDate(t);
+        if (d.year !== dateNav.year || d.month !== dateNav.month) return;
+        if (d.day < range.start || d.day > range.end) return;
+        if (!days[d.day]) days[d.day] = { total: 0, active: 0 };
+        days[d.day].total++;
+        if (!t.done) days[d.day].active++;
+      });
+      for (let day = range.start; day <= range.end; day++) {
+        const data = days[day] || { total: 0, active: 0 };
+        html += `
+          <li data-day="${day}">
+            <span>${dateNav.month}月${day}日</span>
+            <span class="count">${data.active}/${data.total}</span>
+          </li>`;
+      }
+    } else if (dateNav.level === 'tasks') {
+      title = `${dateNav.year}年${dateNav.month}月${dateNav.day}日`;
+      const dayTasks = tasksWithDate.filter(t => {
+        const d = parseTaskDate(t);
+        return d && d.year === dateNav.year && d.month === dateNav.month && d.day === dateNav.day && !t.done;
+      });
+      if (dayTasks.length === 0) {
+        html = '<li class="empty-hint">该日无未完成任务</li>';
+      } else {
+        html = dayTasks.map(t => `
+          <li class="task-detail-item${t.done ? ' done-item' : ''}" data-id="${t.id}">
+            <span class="task-detail-text">${escapeHtml(t.text)}</span>
+            <span class="task-detail-time">${escapeHtml(t.createdAt)}</span>
+          </li>`).join('');
+      }
+    }
+
+    $datePanelTitle.textContent = title;
+    $dateList.innerHTML = html;
+  }
+
+  function navigateDate(level, year, month, week, day) {
+    dateNav = { level, year, month, week, day };
+    renderDateNav();
+  }
+
+  function goBackDate() {
+    if (!dateNav) return;
+    const chain = ['year', 'month', 'week', 'day', 'tasks'];
+    const idx = chain.indexOf(dateNav.level);
+    if (idx <= 0) { closeDatePanel(); return; }
+    const prev = chain[idx - 1];
+    dateNav.level = prev;
+    renderDateNav();
+  }
+
+  $dateFilterBtn.addEventListener('click', openDatePanel);
+
+  $dateBackBtn.addEventListener('click', goBackDate);
+
+  $dateList.addEventListener('click', e => {
+    const li = e.target.closest('li');
+    if (!li) return;
+
+    if (dateNav.level === 'year' && li.dataset.year) {
+      navigateDate('month', +li.dataset.year);
+    } else if (dateNav.level === 'month' && li.dataset.month) {
+      navigateDate('week', dateNav.year, +li.dataset.month);
+    } else if (dateNav.level === 'week' && li.dataset.week) {
+      navigateDate('day', dateNav.year, dateNav.month, +li.dataset.week);
+    } else if (dateNav.level === 'day' && li.dataset.day) {
+      navigateDate('tasks', dateNav.year, dateNav.month, dateNav.week, +li.dataset.day);
+    } else if (dateNav.level === 'tasks' && li.dataset.id) {
+      // Click task to jump to it - could scroll to task in main list
+      closeDatePanel();
+    }
+  });
+
+  document.addEventListener('click', e => {
+    if (!$datePanel.classList.contains('show')) return;
+    if (!e.target.closest('.date-panel') && !e.target.closest('.date-filter-btn')) {
+      closeDatePanel();
+    }
+  });
+
+  function openLightbox(src) {
+    $lightboxImg.src = src;
+    $lightbox.classList.add('show');
+  }
+
+  function closeLightbox() {
+    $lightbox.classList.remove('show');
+    $lightboxImg.src = '';
+  }
+
+  $lightbox.addEventListener('click', e => {
+    if (e.target === $lightbox || e.target.classList.contains('close-lb')) closeLightbox();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  function renderAttachments(files) {
+    if (!files || files.length === 0) return '';
+    return `
+      <div class="task-attachments">
+        ${files.map(f => {
+          const isImg = f.type.startsWith('image/');
+          if (isImg) {
+            return `
+              <div class="att-item" data-action="preview" data-src="${escapeAttr(f.data)}">
+                <img src="${f.data}" alt="" loading="lazy" />
+                <span class="file-name">${escapeHtml(f.name)}</span>
+              </div>`;
+          }
+          return `
+            <a class="att-item" href="${f.data}" download="${escapeAttr(f.name)}" title="${escapeHtml(f.name)}">
+              <span class="file-icon">📄</span>
+              <span class="file-name">${escapeHtml(f.name)}</span>
+            </a>`;
+        }).join('')}
+      </div>`;
+  }
+
+  function startEdit(taskEl, id) {
+    const span = taskEl.querySelector('.text');
+    if (!span || span.querySelector('input')) return;
+    const task = state.tasks.find(t => t.id === id);
+    if (!task) return;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'edit-input';
+    input.value = task.text;
+    input.maxLength = 200;
+    span.replaceWith(input);
+    input.focus();
+    input.select();
+
+    const commit = () => {
+      const newText = input.value.trim();
+      if (newText && newText !== task.text) {
+        task.text = newText;
+        save();
+      }
+      render();
+    };
+
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { input.blur(); }
+      if (e.key === 'Escape') { input.value = task.text; input.blur(); }
+    });
+  }
+
+  function render() {
+    const query = state.searchQuery.trim().toLowerCase();
+    const filtered = state.tasks.filter(t => {
+      if (query && !t.text.toLowerCase().includes(query)) return false;
+      if (state.filter === 'active') return !t.done;
+      if (state.filter === 'done') return t.done;
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      $list.innerHTML = '<li class="empty">暂无任务</li>';
+    } else {
+      $list.innerHTML = filtered.map(t => `
+        <li class="task ${t.done ? 'done' : ''}" data-id="${t.id}">
+          <div class="task-row">
+            <input type="checkbox" ${t.done ? 'checked' : ''} />
+            <span class="text">${escapeHtml(t.text)}</span>
+            <button class="del" title="删除">×</button>
+          </div>
+          <div class="task-time${t.done ? ' done-time' : ''}">${escapeHtml(t.done ? t.completedAt : t.createdAt)}</div>
+          ${renderAttachments(t.files)}
+        </li>
+      `).join('');
+    }
+
+    const activeCount = state.tasks.filter(t => !t.done).length;
+    $counter.textContent = `${activeCount} 项未完成`;
+  }
+
+  function getBeijingTime() {
+    const d = new Date();
+    const fmt = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${fmt(d.getMonth()+1)}-${fmt(d.getDate())} ${fmt(d.getHours())}:${fmt(d.getMinutes())}:${fmt(d.getSeconds())}`;
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function escapeAttr(s) {
+    return s.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  $list.addEventListener('click', e => {
+    const li = e.target.closest('.task');
+    if (!li) return;
+    const id = Number(li.dataset.id);
+
+    if (e.target.matches('input[type="checkbox"]')) { toggle(id); return; }
+    if (e.target.matches('.del')) { remove(id); return; }
+
+    const attItem = e.target.closest('.att-item');
+    if (attItem) {
+      const action = attItem.dataset.action;
+      if (action === 'preview') {
+        openLightbox(attItem.dataset.src);
+      }
+      return;
+    }
+
+    if (e.target.matches('.text')) { startEdit(li, id); }
+  });
+
+  $searchInput.addEventListener('input', () => {
+    state.searchQuery = $searchInput.value;
+    if (state.searchQuery.trim()) {
+      $searchInput.classList.add('has-value');
+    } else {
+      $searchInput.classList.remove('has-value');
+    }
+    render();
+  });
+
+  function submitTask() {
+    const text = $input.value.trim();
+    const hasFiles = state.pendingFiles.length > 0;
+    if (text || hasFiles) {
+      addTask(text || '📎 附件');
+      $input.value = '';
+      $input.focus();
+    }
+  }
+  document.getElementById('addBtn').addEventListener('click', submitTask);
+  $input.addEventListener('keydown', e => { if (e.key === 'Enter') submitTask(); });
+
+  document.querySelector('.filters').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state.filter = btn.dataset.filter;
+    document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  });
+
+  document.getElementById('clearDone').addEventListener('click', clearDone);
+
+  // 设置页面
+  var $settingsBtn = document.getElementById('settingsBtn');
+  var $settingsPage = document.getElementById('settingsPage');
+  var $settingsBack = document.getElementById('settingsBack');
+  var $bgWhiteBtn = document.getElementById('bgWhiteBtn');
+  var $bgBlackBtn = document.getElementById('bgBlackBtn');
+  var $appShell = document.querySelector('.app-shell');
+
+  function openSettings() {
+    updateBgBtns();
+    $settingsPage.classList.add('show');
+  }
+  function closeSettings() {
+    $settingsPage.classList.remove('show');
+  }
+  function setBg(bg) {
+    if (bg === 'black') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('app-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('app-theme', 'light');
+    }
+    updateBgBtns();
+  }
+  function updateBgBtns() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    $bgWhiteBtn.classList.toggle('active', !isDark);
+    $bgBlackBtn.classList.toggle('active', isDark);
+  }
+
+  $settingsBtn.addEventListener('click', function() {
+    updateBgBtns();
+    $appShell.style.display = 'none';
+    $settingsPage.classList.add('show');
+  });
+  $settingsBack.addEventListener('click', function() {
+    $settingsPage.classList.remove('show');
+    $appShell.style.display = '';
+  });
+  $bgWhiteBtn.addEventListener('click', function() { setBg('white'); });
+  $bgBlackBtn.addEventListener('click', function() { setBg('black'); });
+
+  render();
+</script>
+
+
+<button class="settings-btn" id="settingsBtn" title="设置">⚙</button>
+
+<div class="settings-page" id="settingsPage">
+  <div class="settings-header">
+    <button class="settings-back" id="settingsBack">← 返回</button>
+    <h3>设置</h3>
+  </div>
+  <div class="settings-body">
+    <button class="bg-btn" data-bg="white" id="bgWhiteBtn">⬜ 白色背景</button>
+    <button class="bg-btn" data-bg="black" id="bgBlackBtn">⬛ 黑色背景</button>
+  </div>
+</div>
+
+</div><!-- /.app-shell -->
+</div><!-- /#app-container -->
+</body>
+</html>
