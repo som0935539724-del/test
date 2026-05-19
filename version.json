@@ -1,6 +1,7 @@
 {
-  "version": "2",
-  "file": "index.html",
+  "version": "3",
+  "file": "app.html",
   "description": "16:9屏幕适配、设置页面切换黑白背景",
-  "timestamp": "2026-05-19T17:00:00Z"
+  "timestamp": "2026-05-19T17:00:00Z",
+  "integrity": ""
 }

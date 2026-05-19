@@ -2,8 +2,11 @@
 // OTA 热更新管理器
 // 修改 UPDATE_SERVER 指向你的服务器地址
 // ============================================================
-var CURRENT_VERSION = '3';
-var UPDATE_SERVER = 'https://som0935539724-del.github.io/test';
+var CURRENT_VERSION = (function () {
+  var meta = document.querySelector('meta[name="app-version"]');
+  return (meta && meta.content) || '3';
+})();
+var UPDATE_SERVER = 'https://som0935539724-del.github.io/test'; // 改成你的服务器地址
 
 (function () {
   if (document.readyState === 'loading') {
@@ -40,13 +43,18 @@ var UPDATE_SERVER = 'https://som0935539724-del.github.io/test';
             return Preferences.remove({ key: 'pending-version' }).then(
               function () {
                 window.location.href = uriResult.uri;
+                return 'NAVIGATING';
               }
             );
           });
         }
+        return 'CONTINUE';
       })
-      .catch(function () {})
-      .then(function () {
+      .catch(function () {
+        return 'CONTINUE';
+      })
+      .then(function (action) {
+        if (action === 'NAVIGATING') return;
         showApp();
         checkRemoteUpdate(Preferences, Filesystem);
       });
@@ -89,8 +97,20 @@ var UPDATE_SERVER = 'https://som0935539724-del.github.io/test';
         return resp.text();
       })
       .then(function (html) {
-        if (!html.includes('<html')) throw new Error('无效的更新文件');
+        if (!html.includes('<html') || !html.includes('</html>'))
+          throw new Error('无效的更新文件');
 
+        // 如果服务器提供了完整性校验哈希，则校验
+        if (manifest.integrity) {
+          return sha256(html).then(function (hash) {
+            if (hash !== manifest.integrity)
+              throw new Error('更新文件校验失败，可能已损坏');
+            return html;
+          });
+        }
+        return html;
+      })
+      .then(function (html) {
         return Filesystem.writeFile({
           path: 'update.html',
           data: html,
@@ -113,12 +133,15 @@ var UPDATE_SERVER = 'https://som0935539724-del.github.io/test';
       })
       .catch(function (e) {
         console.log('Download:', e.message);
+        showToast('下载失败: ' + e.message);
       });
   }
 
   function compareVer(a, b) {
-    var pa = a.split('.').map(Number);
-    var pb = b.split('.').map(Number);
+    a = String(a).replace(/-.*$/, '');
+    b = String(b).replace(/-.*$/, '');
+    var pa = a.split('.').map(function (v) { var n = Number(v); return isNaN(n) ? 0 : n; });
+    var pb = b.split('.').map(function (v) { var n = Number(v); return isNaN(n) ? 0 : n; });
     for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
       var na = pa[i] || 0;
       var nb = pb[i] || 0;
@@ -126,6 +149,16 @@ var UPDATE_SERVER = 'https://som0935539724-del.github.io/test';
       if (na < nb) return -1;
     }
     return 0;
+  }
+
+  function sha256(text) {
+    var encoder = new TextEncoder();
+    var data = encoder.encode(text);
+    return crypto.subtle.digest('SHA-256', data).then(function (buf) {
+      return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+        return ('00' + b.toString(16)).slice(-2);
+      }).join('');
+    });
   }
 
   function showToast(msg) {
