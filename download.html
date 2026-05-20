@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的App下载</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px 20px; }
+        .btn { display: inline-block; padding: 15px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>欢迎下载我的App</h1>
+    <p>最新版本：1.0.0</p>
+    
+    <!-- 这里的链接替换成你真实的 APK 地址 -->
+    <a href="https://github.com/som0935539724-del/test/blob/main/app-debug.apk" class="btn" id="downloadBtn">立即下载安卓版</a>
+
+    <script>
+        // 简单的设备检测
+        const u = navigator.userAgent;
+        const isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1;
+        const isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/);
+        
+        const btn = document.getElementById('downloadBtn');
+        if (!isAndroid) {
+            btn.innerText = "暂不支持该设备，请使用安卓手机下载";
+            btn.style.background = "#ccc";
+            btn.removeAttribute('href');
+        }
+    </script>
+</body>
+</html>
