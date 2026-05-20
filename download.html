@@ -17,38 +17,8 @@
     <a href="https://github.com/som0935539724-del/test/releases/download/%E6%B5%8B%E8%AF%95/app-debug.apk" class="btn" id="downloadBtn">立即下载安卓版</a>
 
     <script>
-          // 替换成你自己的 GitHub 用户名和仓库名
-  const GITHUB_USER = 'som0935539724-del';
-  const GITHUB_REPO = 'test';
-  // 你当前网页里记录的版本号（可以是硬编码，也可以从其他地方读取）
-  const CURRENT_VERSION = 'v1.0'; 
-
-  async function checkUpdate() {
-    try {
-      // 请求 GitHub 官方 API 获取最新 Release 信息
-      const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/releases/latest`);
-      if (!response.ok) throw new Error('无法获取版本信息');
-      
-      const data = await response.json();
-      const latestVersion = data.tag_name; // 获取最新的版本号（如 v1.1）
-      
-      // 寻找该 Release 里的 APK 下载链接
-      const apkAsset = data.assets.find(asset => asset.name.endsWith('.apk'));
-      if (!apkAsset) return;
-
-      const downloadUrl = apkAsset.browser_download_url;
-
-      // 对比版本号（简单的字符串对比，如果你的版本号是 v1.0, v1.1 这种格式可以直接比）
-      if (latestVersion !== CURRENT_VERSION) {
-        // 弹出提示，让用户下载最新版
-        if (confirm(`发现新版本 ${latestVersion}！是否立即下载更新？`)) {
-          window.location.href = downloadUrl;
-        }
-      }
-    } catch (error) {
-      console.error('检查更新失败:', error);
-    }
-  }
+        
+ 
 
   // 页面加载完成后自动执行检测
   window.onload = checkUpdate;  
