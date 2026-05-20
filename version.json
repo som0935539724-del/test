@@ -1,7 +1,7 @@
 {
-  "version": "3",
-  "file": "app.html",
-  "description": "16:9屏幕适配、设置页面切换黑白背景",
-  "timestamp": "2026-05-19T17:00:00Z",
-  "integrity": ""
+  "version": "4",
+  "file": "index.html",
+  "description": "OTA热更新测试 - 修复更新逻辑，新增完整性校验",
+  "timestamp": "2026-05-19T18:00:00Z",
+  "integrity": "550f7050af76fa4b327d9c17b94436971fdef289eb9b1de063e14d74d00e5b7d"
 }
