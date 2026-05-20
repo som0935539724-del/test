@@ -11,23 +11,48 @@
 </head>
 <body>
     <h1>欢迎下载我的App</h1>
-    <p>最新版本：1.0.0</p>
-    
-    <!-- 这里的链接替换成你真实的 APK 地址 -->
-    <a href="https://github.com/som0935539724-del/test/releases/download/%E6%B5%8B%E8%AF%95v2/app-debug.apk" class="btn" id="downloadBtn">立即下载安卓版</a>
+    <p id="versionText">正在检查更新...</p>
+
+    <a href="#" class="btn" id="downloadBtn">检查中...</a>
 
     <script>
-        // 简单的设备检测
         const u = navigator.userAgent;
         const isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1;
         const isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/);
-        
+
         const btn = document.getElementById('downloadBtn');
-        if (!isAndroid) {
-            btn.innerText = "暂不支持该设备，请使用安卓手机下载";
-            btn.style.background = "#ccc";
+        const verText = document.getElementById('versionText');
+
+        if (isiOS) {
+            btn.innerText = '暂不支持 iOS 设备，请使用安卓手机下载';
+            btn.style.background = '#ccc';
             btn.removeAttribute('href');
+            verText.innerText = '';
         }
+
+        fetch('https://api.github.com/repos/som0935539724-del/test/releases/latest')
+            .then(res => res.json())
+            .then(data => {
+                if (isiOS) return;
+                const version = data.tag_name || '未知';
+                verText.innerText = '最新版本：' + version;
+
+                const apk = data.assets && data.assets.find(a => a.name.endsWith('.apk'));
+                if (apk) {
+                    btn.href = apk.browser_download_url;
+                    btn.innerText = '立即下载安卓版';
+                } else {
+                    btn.innerText = '暂无安装包';
+                    btn.style.background = '#ccc';
+                    btn.removeAttribute('href');
+                }
+            })
+            .catch(() => {
+                verText.innerText = '检查更新失败，请稍后重试';
+                btn.innerText = '暂不可用';
+                btn.style.background = '#ccc';
+                btn.removeAttribute('href');
+            });
     </script>
 </body>
 </html>
