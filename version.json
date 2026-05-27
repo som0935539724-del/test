@@ -2,7 +2,7 @@
     "version": "6.4",
     "minVersion": "3",
     "forceUpdate": false,
-    "apkUrl": "https://github.com/som0935539724-del/test/releases/latest/download/app-debug.apk",
+    "apkUrl": ""apkUrl": "https://som0935539724-del.github.io/test/app-debug.apk"",
     "changelog": "修复已知问题，优化性能",
     "releaseDate": "2026-05-27"
   }
